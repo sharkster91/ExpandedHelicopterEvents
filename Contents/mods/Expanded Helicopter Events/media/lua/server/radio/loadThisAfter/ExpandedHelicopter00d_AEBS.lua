@@ -1,15 +1,20 @@
 require "radio/ISWeatherChannel"
 require "ExpandedHelicopter00f_WeatherImpact"
 
+local PresetAPI = require("EHEShared/Presets");
+local WeatherImpact = require("EHEShared/WeatherImpact");
+
 ---stores and adds on to functions found in /media/lua/server/radio/ISWeatherChannel.lua
 local EHE_WeatherChannel_FillBroadcast = WeatherChannel.FillBroadcast or nil
 function WeatherChannel.FillBroadcast(_gametime, _bc)
 	--call stored version from above using the same arguments
-	EHE_WeatherChannel_FillBroadcast(_gametime, _bc)
+	if EHE_WeatherChannel_FillBroadcast then
+		EHE_WeatherChannel_FillBroadcast(_gametime, _bc)
+	end
 	
 	local c = { r=1.0, g=1.0, b=1.0 }
 	--check if flights would be prevented due to weather
-	local willFly,_ = eHeliEvent_weatherImpact()
+	local willFly,_ = WeatherImpact.Get()
 	if willFly then
 		--table of radio lines to send out - given keys to prevent repetitive lines
 		local linesGoingOut = {}
@@ -22,8 +27,9 @@ function WeatherChannel.FillBroadcast(_gametime, _bc)
 					--pulls event's info to see if more lines can be added
 					local presetID = event.preset
 					local radioChatter = eHelicopter.radioChatter
-					if eHelicopter_PRESETS[presetID] and eHelicopter_PRESETS[presetID].radioChatter then
-						radioChatter = eHelicopter_PRESETS[presetID].radioChatter
+					local preset = PresetAPI.Get(presetID);
+					if preset and preset.radioChatter then
+						radioChatter = preset.radioChatter
 					end
 					linesGoingOut.presetID = getRadioText(radioChatter)
 				end
